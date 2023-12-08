@@ -2,7 +2,6 @@
 #include "main.h"
 #include "bmp_io.h"
 #include <arm_neon.h>
-//#include "NEON_2_SSE.h"
 
 const unsigned char greyLvl = 50;
 
@@ -13,7 +12,7 @@ uint8x16_t binLevel = {
         greyLvl, greyLvl, greyLvl, greyLvl, greyLvl, greyLvl, greyLvl, greyLvl
 };
 
-uint8x16_t ones = vdupq_n_u8(0), twos = vdupq_n_u8(255);
+uint8x16_t ones = vdupq_n_u8(0), twos = vdupq_n_u8(255); // the conditional branches: if condition is true returns 0, else returns 255
 
 void binaryV1(RGBQUAD *rgbInfo, unsigned int pixelCount) {
     for (unsigned int i = 0; i < pixelCount; i++) {
@@ -31,9 +30,7 @@ void binaryV2(RGBQUAD *rgbInfo, unsigned int pixelCount) {
         uint8x16_t rColor = vld1q_u8(rgbInfo + i);
 
         uint8x16_t mask = vcltq_u8(rColor, binLevel); // rColor < binLevel
-        //uint8x16_t ones = vdupq_n_u8(0), twos = vdupq_n_u8(255); // the conditional branches: if condition is true returns 10.0, else returns 20.0
         uint8x16_t v3 = vbslq_u8(mask, ones, twos);  // will select first if mask 0, second if mask 1
-//         => v3 = { 20.0, 10.0, 20.0, 20.0 }
 
         vst1q_u8(rgbInfo + i, v3);
     }
@@ -74,6 +71,9 @@ int main(int argc, char *argv[]) {
 
     BMP_io bmpIo = BMP_io(inputFileName, outputFileName1);
 
+    bmpIo.readBMP();
+    BITMAPINFOHEADER fileInfoHeader = bmpIo.getFileInfoHeader();
+    std::cout << "PIX w= " << fileInfoHeader.biWidth << " h=" << fileInfoHeader.biHeight << std::endl;
 
     //бинаризация 1
 
